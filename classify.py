@@ -9,7 +9,7 @@ from utils import get_clf, resample
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
-
+from sklearn.tree import DecisionTreeClassifier
 
 def clf(train="train.csv",
         test="test.csv",

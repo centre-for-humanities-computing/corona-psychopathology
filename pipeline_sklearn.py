@@ -21,40 +21,7 @@ from sklearn.model_selection import GridSearchCV, cross_validate
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import train_test_split
 
-from imblearn.under_sampling import RandomUnderSampler
-from imblearn.over_sampling import RandomOverSampler
-
-def get_clf(clf, calibrate=False, calibrate_cv=5, **kwargs):
-    clf_dict = {"nb": MultinomialNB,
-                "rf": RandomForestClassifier,
-                "en": ElasticNet,
-                'ab': AdaBoostClassifier
-                }
-    if clf == "xg":
-        from xgboost import XGBClassifier
-        clf_dict["xg"] = XGBClassifier
-    if clf in clf_dict:
-        clf = clf_dict[clf]
-    else:
-        raise ValueError(f"classifier {clf} is not a valid classifier")
-    if calibrate:
-        clf = CalibratedClassifierCV(clf, cv=cv)
-    return clf
-
-
-def resample(df, label_column, method="over", sampling_strategy=1, **kwargs):
-    """
-    method ('over'|'under'):
-    """
-    if method == "under":
-        rus = RandomUnderSampler(sampling_strategy=sampling_strategy)
-        df, y = rus.fit_resample(df, df[label_column])
-    elif method == "over":
-        ros = RandomOverSampler(sampling_strategy=sampling_strategy)
-        df, y = ros.fit_resample(df, df[label_column])
-    else:
-        raise ValueError("Invalid method {method}")
-    return df
+from utils import get_clf, resample
 
 
 def single_clf(data="test_data.csv",
@@ -144,7 +111,8 @@ def single_clf(data="test_data.csv",
     return perf
 
 
-def grid_search(data="test_data.csv",
+
+def grid_search(data="train.csv",
                 text_column="text",
                 label_column="labels",
                 clfs=['nb', 'rf', 'en', 'ab', 'xg'],
@@ -152,15 +120,11 @@ def grid_search(data="test_data.csv",
                 grid_search_clf=True,
                 grid_seach_vectorization=True,
                 cv=5,
-                perc_test=0.3,
                 **kwargs
                 ):
     """
     """
     df = pd.read_csv(data)
-    X_train, X_test, y_train, y_test = train_test_split(df[text_column],
-                                                        df[label_column],
-                                                        test_size=perc_test)
 
     # These are the variables checked for the grid search for vectorization
     # feel free to add to add or remove from this
@@ -249,32 +213,65 @@ if __name__ == '__main__':
     parser.add_argument("-d", "--data",
                         help="filename",
                         default="test_data.csv")
-    parser.add_argument("-l", "--data",
-                        help="filename",
-                        default="test_data.csv")
-    # bow or tfidf
-    parser.add_argument("-v", "--vectorizer",
-                        help="What vectorizer should be used",
-                        default="bow")
-    parser.add_argument("-sw", "--stopwords",
-                        help="a .txt files of Stopwords")
-    parser.add_argument("-l", "--lowercase",
-                        help="lowercase",
-                        default="True")
-    args = parser.parse_args()
-    args = vars(args)  # make it into a dict
+    parser.add_argument("-tc", "--text_column",
+                        help="columns for text",
+                        default="text")
+    parser.add_argument("-lc", "--label_column",
+                        help="columns for labels",
+                        default="labels")
 
-    if args["lowercase"].lower() == "true":
-        args["lowercase"] = True
-    elif args["lowercase"].lower() == "false":
-        args["lowercase"] = False
-    else:
-        raise ValueError("Invalid value for lowercase, it must be either true \
-                          or false")
+    parser.add_argument("-m", "--method",
+                        help="method to be used, either single or grid",
+                        default="grid")
+    
+    parser.add_argument("-pt", "--perc_test",
+                        help="method to be used, either single or grid",
+                        default=0.3, type=int)
 
-    print("\n\nRunning pipeline with the arguments:")
-    for k in args:
-        print(f"\t{k}={args[k]}")
+    parser.add_argument("-ti", "--use_tfidf",
+                        help="Should you use tfidf?",
+                        default=True, type=bool)
+    parser.add_argument("-lc", "--lowercase",
+                        help="Should you lowercase?",
+                        default=True, type=bool)
+    parser.add_argument("-b", "--binary",
+                        help="Should you binarize tokens?",
+                        default=False, type=bool)
+    parser.add_argument("-ng", "--ngrams",
+                        help="unigram, bigrams, or trigrams",
+                        default="bigram")
+    parser.add_argument("-cv", "--cv",
+                        help="cross_validation",
+                        default=5, type=int)
+    parser.add_argument("-c", "--clf",
+                        help="classifier desired 'nb', 'rf', 'en', 'ab', 'xg'",
+                        default='nb', type=int)
+               min_wordcount=2,
+               max_vocab=None,
+               max_perc_occurance=0.5,
+               classifier="nb",
+               calibrate_clf=False,
+               calibrate_cv=5,
+               resample_method='over',
+               cv=5,
+               perc_test=0.3,
 
-    main(**args)
+    ngram_d = {"unigram": (1, 1),
+               "bigram": (1, 2),
+               "trigram": (1, 3)}
+    if 'ngrams' in args:
+        args['ngram_range'] = ngram_d[args['ngrams']]
+        del args['ngrams']
+    method = args['method']
+    del args['method']
+
+
+    # call the desired method
+    if method == "testset":
+        print("Creating train test set")
+        split_to_train_test(**args)
+    elif method == "grid_search":
+        grid_search(**args)
+    elif method == "clf":
+        single_clf(**args)
 

@@ -21,6 +21,12 @@ This should create two files called `train.csv` and `test.csv` with 30% of the d
 - `under` random undersampling to match the majority distribution
 - leave out if you don't want to resample at all
 
+The reminder of the arguments are:
+- `--data` the data to split into a train and test dataset
+- `--text_column` the column indicating text. Default is `text`
+- ` --label_column` the columns indicating labels. Default is  `labels`
+- `--perc_test` percantage of data which should be the  test set
+
 ---
 ## Classify using a single classifier
 In general I recommend using the grid search, but one might want to test out specific classifiers so I made this the this case.
@@ -52,8 +58,61 @@ Naturally you can choose many more options these include:
 - `--max_perc_occurance` a word is removed it is appears in X percent of the document. Can be considered a corpus specific stopwordlist. Default is `0.5`
 - `--clf_args` arguments to be passed to the classifier given as a dictionary. Default is `{}`, an empty dictionary
 
+---
+## Grid search
+This is the meat of the scripts. Beware of not overdoing it, if you fit all the models at once this will take a long time.
+
+The simplest use case is:
+```
+python grid_search.py --clfs nb ab
+```
+Which will print:
+```
+Calling grid search with the arguments:
+        data: train.csv
+        clfs: ['nb', 'ab']
+        resampling: [None]
+        grid_search_clf: True
+        grid_seach_vectorization: True
+        cv: 5
+        text_column: text
+        label_column: labels
+Fitting 5 folds for each of 24 candidates, totalling 120 fits
+[Parallel(n_jobs=-1)]: Using backend LokyBackend with 12 concurrent workers.
+[Parallel(n_jobs=-1)]: Done  26 tasks      | elapsed:   39.5s
+```
+Note that if the number of fits is extremely high it is probably ideal to try with less testing. e.g. only using grid search for vectorization or for the classifiers or only using 3 cross validation folds.
+
+You will see that this doesn't use the `test.csv` but you can test the best function using the `classify.py` above (see example in next section).
+
+The possible arguments are:
+- `--data` the desired data. Default is `train.csv`, i.e. can typically left out if the data is already split using `create_test_train.py`
+- `--clfs` the classifiers to use, same options as `classify.py`. Can be multiple.
+- `--grid_search_clf` should classifiers hyperparemeters be grid searched. Default is `True`
+- `--grid_seach_vectorization` should vectorization hyperparemeters be grid searched. Vectorization is the method of turning the text into a bag-of-word and/or tf-idf. Default is `True`.
+- `--cv` number of cross validation folds. Default is `5`
+- `--resampling` same as `create_test_train.py` but can be a list. See to following code for an example. *Note that this is only relevant if the train test data isn't resampled*
+- `--text_column` same as `create_test_train.py`
+- `--label_column` same as `create_test_train.py`
+
+The advanced use case is:
+```
+python grid_search.py --clfs nb en rf ab xg en --grid_search_clf True --grid_seach_vectorization True --cv 5
+```
+*Note* that here is used the train data and used the resampling. Naturally this assumed that the train data is not resampled. Basically this is a way to test the influence of the resampling and which approach is best. **Warning**: This will take a long time to run, but it should run through all the variations I have specified for each model combined with each method of vectorization. Maybe a bit too exhaustive as the method of vectorization is probably going to good for similar models.
+
+Lastly, the variables used for the grid search is hidden with the script and are defined as:
+- `search_params_vect` search parameter for the vectorization
+- `search_params_tfidf` search parameter for the tfidf (e.g. whether it should or should use idf)
+- `search_params_clf` these are the search parameters for the classifiers
+You are free to change these in the script, however note that the grid search increase exponentially so I recommend starting adding thing slowly and removing things if things take too long. There is a lot of experimentation to do here, which is likely to influence results.
 
 
+---
+## Checking best classifier
+This used the classify.py as mentioned above and the output from the first chunk of code for the grid search
+```
+```
 
 ---
 ***Final note***
@@ -62,6 +121,6 @@ You if you want to adjust more to the scripts you can create you own script and 
 ```
 from create_test_train import split_to_train_test
 
-# now it is possible to call the imported function:
+# now it is possible to call the imported function similar to how you do with any package:
 split_to_train_test(...)
 ```

@@ -38,6 +38,8 @@ def resample(df, label_column, method="over", sampling_strategy=1, **kwargs):
     elif method == "over":
         ros = RandomOverSampler(sampling_strategy=sampling_strategy)
         df, y = ros.fit_resample(df, df[label_column])
+    elif method is None:
+        pass
     else:
         raise ValueError("Invalid method {method}")
     return df
