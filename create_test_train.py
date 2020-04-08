@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 
 from utils import resample as rs
 
+
 def split_to_train_test(data="test_data.csv",
                         text_column="text",
                         label_column="labels",
@@ -18,11 +19,6 @@ def split_to_train_test(data="test_data.csv",
 
     df = pd.read_csv(data)
 
-    if resample:
-        df = rs(df, label_column,
-                method=resample,
-                sampling_strategy=sampling_strategy,
-                **kwargs)
     X_train, X_test, y_train, y_test = \
         train_test_split(df[text_column],
                          df[label_column],
@@ -30,6 +26,12 @@ def split_to_train_test(data="test_data.csv",
 
     train = pd.DataFrame(zip(X_train, y_train),
                          columns=["text", "labels"])
+    if resample:
+        train = rs(train, "labels",
+                   method=resample,
+                   sampling_strategy=sampling_strategy,
+                   **kwargs)
+
     test = pd.DataFrame(zip(X_test, y_test),
                         columns=["text", "labels"])
     train.to_csv("train.csv")
