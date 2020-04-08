@@ -56,9 +56,9 @@ if __name__ == '__main__':
                         help="what method should you use to resample",
                         default=None)
 
-    # clean args:
-    int_args = {'perc_test'}
+    # parse and clean args:
     args = parser.parse_args()
     args = vars(args)  # make it into a dict
+
     print("Calling split_to_train_test with args:", args)
     split_to_train_test(**args)
