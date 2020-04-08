@@ -2,6 +2,7 @@
 a script to train and test classifier
 """
 import argparse
+import json
 
 import pandas as pd
 from utils import get_clf, resample
@@ -105,7 +106,7 @@ if __name__ == '__main__':
                         default=0.5, type=float)
     parser.add_argument("-ca", "--clf_args",
                         help="argument given to the classifier",
-                        default={}, type=dict)
+                        default={}, type=json.loads)
 
     parser.add_argument("-tr", "--train",
                         help="trainset",
@@ -126,9 +127,14 @@ if __name__ == '__main__':
 
     ngram_d = {"unigram": (1, 1),
                "bigram": (1, 2),
-               "trigram": (1, 3)}
+               "trigram": (1, 3),
+               "4gram": (1, 4)}
     if 'ngrams' in args:
         args['ngram_range'] = ngram_d[args['ngrams']]
         del args['ngrams']
+    if ('clf_args' in args) and \
+       ('base_estimator' in args['clf_args']):
+        args['clf_args']['base_estimator'] = \
+            eval(args['clf_args']['base_estimator'])
 
     clf(**args)

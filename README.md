@@ -13,7 +13,7 @@ Before you start you might neeed to create a virtual environment in anaconda or 
 ## Creating the test and train set
 To create the test and train set run the following, to run the script `create_test_train.py`
 ```
-python create_test_train.py --data test_data.csv --text_column text --label_column labels --perc_test 0.3 --resample over
+$ python create_test_train.py --data test_data.csv --text_column text --label_column labels --perc_test 0.3 --resample over
 ```
 
 This should create two files called `train.csv` and `test.csv` with 30% of the data in the test set being in the test set and the data resample according the resample statement, which can be:
@@ -33,7 +33,7 @@ In general I recommend using the grid search, but one might want to test out spe
 
 It is called from the terminal in the following way, but I do encourage the reader to check out the script as well
 ```
-python classify.py --classifier nb
+$ python classify.py --classifier nb
 ```
 which should print out:
 ```
@@ -52,7 +52,7 @@ Naturally you can choose many more options these include:
 - `--use_tfidf` should the preprocessing use tf-idf (alternative is Bag-of-words). Default is `True` 
 - `--lowercase` should the text be lowercased. Default is `True`
 - `--binary` should the text be binarized, e.g. only detect whether a word (or n-gram) appear rather than using count. Default is `False`
-- `--ngrams` n-grams used, options include `unigram`, `bigram` and `trigram`. Default is `bigram`. *Note that is also uses lower levels n-gram as well, e.g. bigram also uses unigrams*. 
+- `--ngrams` n-grams used, options include `unigram`, `bigram`, `trigram` and `4gram`. Default is `bigram`. *Note that is also uses lower levels n-gram as well, e.g. bigram also uses unigrams*. 
 - `--min_wordcount` minimum wordcount required for a word to be included in the model. Default is `2`
 - `--max_vocab` maximum desired vocabulary choosen among the most frequent words, which isn't removed by other conditions. Default is `None`, e.g. no maximum size is set
 - `--max_perc_occurance` a word is removed it is appears in X percent of the document. Can be considered a corpus specific stopwordlist. Default is `0.5`
@@ -64,7 +64,7 @@ This is the meat of the scripts. Beware of not overdoing it, if you fit all the 
 
 The simplest use case is:
 ```
-python grid_search.py --clfs nb ab
+$ python grid_search.py --clfs nb ab
 ```
 Which will print:
 ```
@@ -79,9 +79,41 @@ Calling grid search with the arguments:
         label_column: labels
 Fitting 5 folds for each of 24 candidates, totalling 120 fits
 [Parallel(n_jobs=-1)]: Using backend LokyBackend with 12 concurrent workers.
-[Parallel(n_jobs=-1)]: Done  26 tasks      | elapsed:   39.5s
+[Parallel(n_jobs=-1)]: Done  26 tasks      | elapsed:   38.1s
+[Parallel(n_jobs=-1)]: Done 120 out of 120 | elapsed:  2.8min finished
+Fitting 5 folds for each of 48 candidates, totalling 240 fits
+[Parallel(n_jobs=-1)]: Using backend LokyBackend with 12 concurrent workers.
+[Parallel(n_jobs=-1)]: Done  26 tasks      | elapsed:  2.0min
+[Parallel(n_jobs=-1)]: Done 176 tasks      | elapsed: 14.3min
+[Parallel(n_jobs=-1)]: Done 240 out of 240 | elapsed: 21.5min finished
+
+
+The grid search is completed the results were:
+
+Using the resampling method: None
+        The best fit of the clf: nb, obtained a score of 0.9082, with the parameters:
+                tfidf__use_idf = True
+                vect__binary = True
+                vect__lowercase = True
+                vect__max_df = 0.5
+                vect__min_df = 2
+                vect__ngram_range = (1, 2)
+        The best fit of the clf: ab, obtained a score of 0.9127, with the parameters:
+                clf__base_estimator = DecisionTreeClassifier(ccp_alpha=0.0, class_weight=None, criterion='gini',
+                       max_depth=2, max_features=None, max_leaf_nodes=None,
+                       min_impurity_decrease=0.0, min_impurity_split=None,
+                       min_samples_leaf=1, min_samples_split=2,
+                       min_weight_fraction_leaf=0.0, presort='deprecated',
+                       random_state=None, splitter='best')
+                tfidf__use_idf = True
+                vect__binary = True
+                vect__lowercase = True
+                vect__max_df = 0.5
+                vect__min_df = 2
+                vect__ngram_range = (1, 4)
 ```
-Note that if the number of fits is extremely high it is probably ideal to try with less testing. e.g. only using grid search for vectorization or for the classifiers or only using 3 cross validation folds.
+This is a bit much, let's break it down. The first simply gives you of which argument have been given and how the function is being called. Note that if the number of fits is extremely high it is probably ideal to try with less testing. e.g. only using grid search for vectorization or for the classifiers or only using 3 cross validation folds.
+The last bit shows the results of the grid search, which parameter were the best for each model. We will look into this in the next section.
 
 You will see that this doesn't use the `test.csv` but you can test the best function using the `classify.py` above (see example in next section).
 
@@ -110,9 +142,55 @@ You are free to change these in the script, however note that the grid search in
 
 ---
 ## Checking best classifier
-This used the classify.py as mentioned above and the output from the first chunk of code for the grid search
+This used the classify.py as mentioned above and the output from the first chunk of code for the grid search. We tested two model in the above code. Let's check how they perform on the test data. Starting with the nb the output were:
 ```
+        The best fit of the clf: nb, obtained a score of 0.9082, with the parameters:
+                tfidf__use_idf = True
+                vect__binary = True
+                vect__lowercase = True
+                vect__max_df = 0.5
+                vect__min_df = 2
+                vect__ngram_range = (1, 2)
 ```
+All of these as measure of the vectorization as the naive bayes classifier have no hyperparameter to optimize using grid search. This can also be seen the the prefix (`vect__*` and `tfidf__*`). These results mean that the best results were founds with the following setup:
+- using tfidf (`tfidf__use_idf = True`)
+- using a binary classifer (`vect__binary = True`)
+- using lowercase (`vect__lowercase = True`)
+- removing words which appeared in 50% of the documents (`vect__max_df = 0.5`) which is correspond to `max_perc_occurance` in the `classify.py` arguments
+- removing words which only appear once in the training data. (`vect__min_df`) (Note that this is the training data in the cross validated dataset e.g. a subet of `train.csv`)
+- the best performance was seen using bigrams
+
+**Note** that not all options are checked. To see exactyl which ones are checked you will have to examine the script and it might be ideal to change these to explore different things.
+
+The way to check this using `classify.py` would then be to:
+```
+python classify.py --classifier nb --max_perc_occurance 0.5 --binary True --lowercase True --use_tfidf True --ngrams bigram --min_wordcount 2
+```
+
+Let's also examine the case of the Adaboost:
+```
+        The best fit of the clf: ab, obtained a score of 0.9127, with the parameters:
+                clf__base_estimator = DecisionTreeClassifier(ccp_alpha=0.0, class_weight=None, criterion='gini',
+                       max_depth=2, max_features=None, max_leaf_nodes=None,
+                       min_impurity_decrease=0.0, min_impurity_split=None,
+                       min_samples_leaf=1, min_samples_split=2,
+                       min_weight_fraction_leaf=0.0, presort='deprecated',
+                       random_state=None, splitter='best')
+                tfidf__use_idf = True
+                vect__binary = True
+                vect__lowercase = True
+                vect__max_df = 0.5
+                vect__min_df = 2
+                vect__ngram_range = (1, 4)
+```
+You can see that the only argument tested for the classifier was base estimator (the only one with the `clf__*` prefix). Which is a bit long, but it essentially says that the best base estimator tested was a decision tree with a depth of 2 (the ones tested was decision trees with a depth of 1 and 2)
+
+For the reminder we see that it performaned the best with 4 grams and otherwise the same as above. This could be written
+
+```
+python classify.py --classifier ab --max_perc_occurance 0.5 --binary True --lowercase True --use_tfidf True --ngrams 4gram --min_wordcount 2 --clf_args '{"base_estimator":"DecisionTreeClassifier(max_depth=2)"}'
+```
+The syntax for the argument clf_args is a bit exhaustive, but it is similar to json and dictionaries. Feel free to let me know if there is any issues.
 
 ---
 ***Final note***

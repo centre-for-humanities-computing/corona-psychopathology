@@ -3,6 +3,7 @@ A script for conducting grid search using sklearn
 """
 import argparse
 
+
 import numpy as np
 import pandas as pd
 
@@ -97,7 +98,7 @@ def grid_search(data="train.csv",
         for c in results[rs]:
             score, best_params, t = results[rs][c]
             print(f"\tThe best fit of the clf: {c}, " +
-                  "obtained a score of {score}, with the parameters:")
+                  f"obtained a score of {round(score, 4)}, with the parameters:")
             for p in best_params:
                 print(f"\t\t{p} = {best_params[p]}")
     return results
