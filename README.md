@@ -57,6 +57,7 @@ Naturally you can choose many more options these include:
 - `--max_vocab` maximum desired vocabulary choosen among the most frequent words, which isn't removed by other conditions. Default is `None`, e.g. no maximum size is set
 - `--max_perc_occurance` a word is removed it is appears in X percent of the document. Can be considered a corpus specific stopwordlist. Default is `0.5`
 - `--clf_args` arguments to be passed to the classifier given as a dictionary. Default is `{}`, an empty dictionary
+- `--scoring` the scoring methods of the classifier. Default is "accuracy" for a full list see [this site](https://scikit-learn.org/stable/modules/model_evaluation.html) under 'classification'. Recommended include 'roc_auc', 'f1' and 'balanced_accuracy'.
 
 ---
 ## Grid search
@@ -126,6 +127,7 @@ The possible arguments are:
 - `--resampling` same as `create_test_train.py` but can be a list. See to following code for an example. *Note that this is only relevant if the train test data isn't resampled*
 - `--text_column` same as `create_test_train.py`
 - `--label_column` same as `create_test_train.py`
+- `--scoring` the scoring methods of the classifier. Default is "accuracy" for a full list see [this site](https://scikit-learn.org/stable/modules/model_evaluation.html) under 'classification'. Recommended include 'roc_auc', 'f1' and 'balanced_accuracy'.
 
 The advanced use case is:
 ```

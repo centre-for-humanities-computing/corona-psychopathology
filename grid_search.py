@@ -25,6 +25,7 @@ def grid_search(data="train.csv",
                 grid_search_clf=True,
                 grid_seach_vectorization=True,
                 cv=5,
+                scoring="accuracy",
                 **kwargs
                 ):
     """
@@ -78,8 +79,8 @@ def grid_search(data="train.csv",
             for k in search_params_clf[c]:
                 parameters['clf__'+k] = search_params_clf[c][k]
 
-        gs_clf = GridSearchCV(pipe, parameters, cv=cv, verbose=True,
-                              n_jobs=-1)  # run on all cores
+        gs_clf = GridSearchCV(pipe, parameters, scoring=scoring, cv=cv,
+                              verbose=True, n_jobs=-1)  # run on all cores
         fit = gs_clf.fit(df[text_column], df[label_column])
         return(fit.best_score_, fit.best_params_, fit)
 
@@ -132,7 +133,9 @@ if __name__ == '__main__':
     parser.add_argument("-lc", "--label_column",
                         help="columns for labels",
                         default="labels")
-
+    parser.add_argument("-sc", "--scoring",
+                        help="scoring function for grid search",
+                        default="accuracy")
     # parse and clean args:
     args = parser.parse_args()
     args = vars(args)  # make it into a dict

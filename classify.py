@@ -27,6 +27,7 @@ def clf(train="train.csv",
         calibrate_clf=False,
         calibrate_cv=5,
         clf_args={},
+        scoring="accuracy",
         **kwargs):
     """
     Use for testing a single classifier
@@ -67,8 +68,10 @@ def clf(train="train.csv",
                         ('clf', clf(**kwargs))])
 
     fit = pipe.fit(train[text_column], train[label_column])
-    perf = {"acc_train": fit.score(train[text_column], train[label_column]),
-            "acc_test": fit.score(test[text_column], test[label_column])}
+    perf = {"acc_train": fit.score(train[text_column], train[label_column],
+                                   scoring=scoring),
+            "acc_test": fit.score(test[text_column], test[label_column],
+                                  scoring=scoring)}
     print(f"Performance using the classifier {classifier}" +
           ", was found to be:")
 
@@ -120,7 +123,9 @@ if __name__ == '__main__':
     parser.add_argument("-lc", "--label_column",
                         help="columns for labels",
                         default="labels")
-
+    parser.add_argument("-sc", "--scoring",
+                        help="scoring function for grid search",
+                        default="accuracy")
     # parse and clean args:
     args = parser.parse_args()
     args = vars(args)  # make it into a dict
