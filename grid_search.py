@@ -7,14 +7,17 @@ import argparse
 import numpy as np
 import pandas as pd
 
-from sklearn.pipeline import Pipeline
+from imblearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.tree import DecisionTreeClassifier
 
 from sklearn.model_selection import GridSearchCV
 
-from utils import get_clf, resample
+from utils import get_clf
+
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.over_sampling import RandomOverSampler, SMOTE
 
 
 def grid_search(data="train.csv",
@@ -23,12 +26,15 @@ def grid_search(data="train.csv",
                 clfs=['nb', 'rf', 'en', 'ab', 'xg'],
                 resampling=[None],
                 grid_search_clf=True,
-                grid_seach_vectorization=True,
+                grid_seach_vectorization=False,
                 cv=5,
                 scoring="accuracy",
+                sampling_strategy=1,
                 **kwargs
                 ):
     """
+    resampling (str | None) options are:
+    over, under, smote, under_over, under_smote
     """
     df = pd.read_csv(data)
 
@@ -61,12 +67,19 @@ def grid_search(data="train.csv",
                 'gamma': [0.0, 0.1, 0.2]}}
 
     # Defining an inner function for grid search
-    def __grid_search(df, c, **kwargs):
+    def __grid_search(df, c, sampling, **kwargs):
         clf = get_clf(c, **kwargs)
-        pipe = Pipeline([('vect', CountVectorizer(**kwargs)),
-                        ('tfidf', TfidfTransformer(**kwargs)),
-                        ('clf', clf(**kwargs))])
-
+        if sampling is None:
+            pipe = Pipeline([('vect', CountVectorizer(**kwargs)),
+                            ('tfidf', TfidfTransformer(**kwargs)),
+                            ('clf', clf(**kwargs))])
+        else:
+            sampling = resampling_d[rs]
+            pipe = Pipeline([('vect', CountVectorizer(**kwargs)),
+                            ('tfidf', TfidfTransformer(**kwargs)),
+                            ('sampling',
+                             sampling(sampling_strategy, **kwargs)),
+                            ('clf', clf(**kwargs))])
         # construct grid search parameters
         parameters = {}
 
@@ -84,12 +97,16 @@ def grid_search(data="train.csv",
         fit = gs_clf.fit(df[text_column], df[label_column])
         return(fit.best_score_, fit.best_params_, fit)
 
+    resampling_d = {"over": RandomOverSampler,
+                    "under": RandomUnderSampler,
+                    "smote": SMOTE,
+                    None: None}
+
     results = {}
     for rs in resampling:
         res = {}
-        df_ = resample(df, label_column, rs, **kwargs)
         for c in clfs:
-            r = __grid_search(df_, c, **kwargs)
+            r = __grid_search(df, c, rs, **kwargs)
             res[c] = r
         results[rs] = res
 
@@ -99,7 +116,8 @@ def grid_search(data="train.csv",
         for c in results[rs]:
             score, best_params, t = results[rs][c]
             print(f"\tThe best fit of the clf: {c}, " +
-                  f"obtained a score of {round(score, 4)}, with the parameters:")
+                  f"obtained a score of {round(score, 4)}, \
+                      with the parameters:")
             for p in best_params:
                 print(f"\t\t{p} = {best_params[p]}")
     return results
@@ -136,6 +154,51 @@ if __name__ == '__main__':
     parser.add_argument("-sc", "--scoring",
                         help="scoring function for grid search",
                         default="accuracy")
+    # parse and clean args:
+    args = parser.parse_args()
+    args = vars(args)  # make it into a dict
+
+    print("\n\nCalling grid search with the arguments:")
+    for k in args:
+        print(f"\t{k}: {args[k]}")
+    grid_search(**args)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-d", "--data",
+                        help="what data to use",
+                        default="train.csv")
+    parser.add_argument("-c", "--clfs",
+                        help="What classifier should you use",
+                        nargs='+')
+    parser.add_argument("-rs", "--resampling",
+                        help="should you resample, and how. Can be multiple",
+                        nargs='+', default=[None])
+    parser.add_argument("-gc", "--grid_search_clf",
+                        help="should you grid search classifier?",
+                        default=True, type=bool)
+    parser.add_argument("-gv", "--grid_seach_vectorization",
+                        help="should you grid search vectorizer?",
+                        default=True, type=bool)
+    parser.add_argument("-cv", "--cv",
+                        help="number of cross validation folds",
+                        default=5, type=int)
+
+    parser.add_argument("-tc", "--text_column",
+                        help="columns for text",
+                        default="text")
+    parser.add_argument("-lc", "--label_column",
+                        help="columns for labels",
+                        default="labels")
+    parser.add_argument("-sc", "--scoring",
+                        help="scoring function for grid search",
+                        default="accuracy")
+    parser.add_argument("-ss", "--sampling_strategy",
+                        help="the desired proportion of the minority to the \
+                            majority",
+                        default=1.0, type=float)
+
     # parse and clean args:
     args = parser.parse_args()
     args = vars(args)  # make it into a dict

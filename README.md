@@ -19,6 +19,7 @@ $ python create_test_train.py --data test_data.csv --text_column text --label_co
 This should create two files called `train.csv` and `test.csv` with 30% of the data in the test set being in the test set and the data resample according the resample statement, which can be:
 - `over` random oversampling to match the majority category
 - `under` random undersampling to match the majority distribution
+- `smote` **(NEW)** Synthetic Minority Oversampling Technique (SMOTE)
 - leave out if you don't want to resample at all
 
 The reminder of the arguments are:
@@ -128,6 +129,7 @@ The possible arguments are:
 - `--text_column` same as `create_test_train.py`
 - `--label_column` same as `create_test_train.py`
 - `--scoring` the scoring methods of the classifier. Default is "accuracy" for a full list see [this site](https://scikit-learn.org/stable/modules/model_evaluation.html) under 'classification'. Recommended include 'roc_auc', 'f1' and 'balanced_accuracy'.
+- `--sampling_strategy` **(NEW)** The degree of sampling. Specified as the desired proportion of the minority to the majority. I.e. 1 means that you want equal ammount of minority and majority data, 0.5 mean that you want 0.5 minority datapoints to each majority datapoint (ratio 2:1).
 
 The advanced use case is:
 ```
