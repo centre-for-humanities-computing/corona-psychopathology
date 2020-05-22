@@ -123,45 +123,45 @@ def grid_search(data="train.csv",
     return results
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+# if __name__ == '__main__':
+#     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-d", "--data",
-                        help="what data to use",
-                        default="train.csv")
-    parser.add_argument("-c", "--clfs",
-                        help="What classifier should you use",
-                        nargs='+')
-    parser.add_argument("-rs", "--resampling",
-                        help="should you resample, and how. Can be multiple",
-                        nargs='+', default=[None])
-    parser.add_argument("-gc", "--grid_search_clf",
-                        help="should you grid search classifier?",
-                        default=True, type=bool)
-    parser.add_argument("-gv", "--grid_seach_vectorization",
-                        help="should you grid search vectorizer?",
-                        default=True, type=bool)
-    parser.add_argument("-cv", "--cv",
-                        help="number of cross validation folds",
-                        default=5, type=int)
+#     parser.add_argument("-d", "--data",
+#                         help="what data to use",
+#                         default="train.csv")
+#     parser.add_argument("-c", "--clfs",
+#                         help="What classifier should you use",
+#                         nargs='+')
+#     parser.add_argument("-rs", "--resampling",
+#                         help="should you resample, and how. Can be multiple",
+#                         nargs='+', default=[None])
+#     parser.add_argument("-gc", "--grid_search_clf",
+#                         help="should you grid search classifier?",
+#                         default=True, type=bool)
+#     parser.add_argument("-gv", "--grid_seach_vectorization",
+#                         help="should you grid search vectorizer?",
+#                         default=True, type=bool)
+#     parser.add_argument("-cv", "--cv",
+#                         help="number of cross validation folds",
+#                         default=5, type=int)
 
-    parser.add_argument("-tc", "--text_column",
-                        help="columns for text",
-                        default="text")
-    parser.add_argument("-lc", "--label_column",
-                        help="columns for labels",
-                        default="labels")
-    parser.add_argument("-sc", "--scoring",
-                        help="scoring function for grid search",
-                        default="accuracy")
-    # parse and clean args:
-    args = parser.parse_args()
-    args = vars(args)  # make it into a dict
+#     parser.add_argument("-tc", "--text_column",
+#                         help="columns for text",
+#                         default="text")
+#     parser.add_argument("-lc", "--label_column",
+#                         help="columns for labels",
+#                         default="labels")
+#     parser.add_argument("-sc", "--scoring",
+#                         help="scoring function for grid search",
+#                         default="accuracy")
+#     # parse and clean args:
+#     args = parser.parse_args()
+#     args = vars(args)  # make it into a dict
 
-    print("\n\nCalling grid search with the arguments:")
-    for k in args:
-        print(f"\t{k}: {args[k]}")
-    grid_search(**args)
+#     print("\n\nCalling grid search with the arguments:")
+#     for k in args:
+#         print(f"\t{k}: {args[k]}")
+#     grid_search(**args)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
